@@ -1432,6 +1432,8 @@ function resetAll() {
   ];
   rebuildStep3UI();
 
+  sessionStorage.removeItem('worksheet_session');
+
   // Go back to intro
   document.getElementById('mainContainer').style.display = 'none';
   document.getElementById('progressBar').classList.remove('visible');
@@ -1444,7 +1446,47 @@ function resetAll() {
 
 // --- Auto-save ---
 function autoSave() {
-  // 자동저장 비활성화 — 매번 초기 상태로 시작
+  const data = {
+    userName: document.getElementById('userName').value,
+    userRole: document.getElementById('userRole').value,
+    taskName: document.getElementById('taskName').value,
+    taskFreq: document.getElementById('taskFreq').value,
+    taskReason: document.getElementById('taskReason').value,
+    taskInput: document.getElementById('taskInput').value,
+    taskOutput: document.getElementById('taskOutput').value,
+    currentStep: currentStep,
+    steps: step3Data.map(s => ({ text: s.text, isBottleneck: s.isBottleneck, reason: s.reason, linkedInput: s.linkedInput, linkedOutput: s.linkedOutput }))
+  };
+  sessionStorage.setItem('worksheet_session', JSON.stringify(data));
+}
+
+function loadSession() {
+  const raw = sessionStorage.getItem('worksheet_session');
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    if (!data.userName && !data.taskName) return false;
+
+    document.getElementById('userName').value = data.userName || '';
+    document.getElementById('userRole').value = data.userRole || '';
+    document.getElementById('taskName').value = data.taskName || '';
+    document.getElementById('taskFreq').value = data.taskFreq || '';
+    document.getElementById('taskReason').value = data.taskReason || '';
+    document.getElementById('taskInput').value = data.taskInput || '';
+    document.getElementById('taskOutput').value = data.taskOutput || '';
+
+    if (data.steps && data.steps.length > 0) {
+      step3Data = data.steps.map(s => ({
+        text: s.text || '',
+        isBottleneck: !!s.isBottleneck,
+        reason: s.reason || '',
+        linkedInput: !!s.linkedInput,
+        linkedOutput: !!s.linkedOutput
+      }));
+    }
+
+    return data.currentStep || 0;
+  } catch(e) { return false; }
 }
 
 // --- Utilities ---
@@ -1484,7 +1526,19 @@ function updateIOArrows() {
 window.addEventListener('resize', updateIOArrows);
 
 // --- Init ---
-initStep3();
+const savedStep = loadSession();
+if (savedStep !== false && savedStep > 0) {
+  // 새로고침 복원: step3Data는 loadSession에서 이미 로드됨
+  rebuildStep3UI();
+  document.getElementById('introPage').style.display = 'none';
+  document.getElementById('mainContainer').style.display = 'block';
+  document.getElementById('progressBar').classList.add('visible');
+  document.getElementById('progressLabels').classList.add('visible');
+  updateUserInfoBar();
+  goToStep(savedStep);
+} else {
+  initStep3();
+}
 updateIOArrows();
 </script>
 
