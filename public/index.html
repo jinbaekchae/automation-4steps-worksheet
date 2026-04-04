@@ -712,6 +712,34 @@ body {
 }
 .modal-btn-send:hover { background: #7C3AED; }
 
+/* Loading Overlay */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.92);
+  z-index: 300;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.loading-overlay.show { display: flex; }
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--gray-200);
+  border-top: 4px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
 /* Toast */
 .toast {
   position: fixed;
@@ -782,8 +810,8 @@ body {
     <div class="field-label">이름</div>
     <input type="text" class="field-input" id="userName" placeholder="예: 홍길동" style="margin-bottom: 12px;" oninput="autoSave()">
     <!-- TODO: 배포 시 직무에 따라 placeholder 예시를 동적으로 변경 (Gemini API) -->
-    <div class="field-label">직무</div>
-    <input type="text" class="field-input" id="userRole" placeholder="예: 재경팀 회계 담당" style="margin-bottom: 0;" oninput="autoSave()">
+    <div class="field-label">기업/소속/직무</div>
+    <input type="text" class="field-input" id="userRole" placeholder="예: 반도체기업 재경팀 회계 담당" style="margin-bottom: 0;" oninput="autoSave()">
   </div>
   <button class="btn-start" onclick="startWorksheet()">시작하기</button>
 </div>
@@ -911,6 +939,12 @@ body {
   </div>
 </div>
 
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">직무에 맞는 예시를 준비하고 있습니다...</div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -919,7 +953,9 @@ const totalSteps = 4;
 let syncingFromStep3 = false;
 
 // --- Intro ---
-function startWorksheet() {
+let worksheetId = null; // DB에 저장된 워크시트 ID
+
+async function startWorksheet() {
   const name = document.getElementById('userName').value.trim();
   const role = document.getElementById('userRole').value.trim();
   if (!name) {
@@ -932,6 +968,28 @@ function startWorksheet() {
     document.getElementById('userRole').focus();
     return;
   }
+
+  // 로딩 화면 표시 + Gemini API로 맞춤 예시 생성
+  document.getElementById('loadingOverlay').classList.add('show');
+  try {
+    const resp = await fetch('/api/generate-examples', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role })
+    });
+    if (resp.ok) {
+      const ex = await resp.json();
+      if (ex.taskName) document.getElementById('taskName').placeholder = '예: ' + ex.taskName;
+      if (ex.taskFreq) document.getElementById('taskFreq').placeholder = '예: ' + ex.taskFreq;
+      if (ex.taskReason) document.getElementById('taskReason').placeholder = '예: ' + ex.taskReason;
+      if (ex.taskInput) document.getElementById('taskInput').placeholder = '예: ' + ex.taskInput;
+      if (ex.taskOutput) document.getElementById('taskOutput').placeholder = '예: ' + ex.taskOutput;
+    }
+  } catch (e) {
+    // API 실패 시 기본 placeholder 유지
+  }
+  document.getElementById('loadingOverlay').classList.remove('show');
+
   document.getElementById('introPage').style.display = 'none';
   document.getElementById('mainContainer').style.display = 'block';
   document.getElementById('progressBar').classList.add('visible');
@@ -1228,9 +1286,33 @@ function updateNav() {
   }
 }
 
-function nextStep() {
+async function nextStep() {
   if (currentStep === totalSteps) return;
-  // TODO: 배포 시 Step 3→4 전환 시 saveToDB() 호출
+  // Step 3→4 전환 시 DB 저장
+  if (currentStep === 3) {
+    generatePrompt();
+    try {
+      const resp = await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('userName').value,
+          role: document.getElementById('userRole').value,
+          taskName: document.getElementById('taskName').value,
+          taskFreq: document.getElementById('taskFreq').value,
+          taskReason: document.getElementById('taskReason').value,
+          taskInput: document.getElementById('taskInput').value,
+          taskOutput: document.getElementById('taskOutput').value,
+          steps: step3Data,
+          prompt: getPromptText()
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        worksheetId = data.id;
+      }
+    } catch (e) { /* 저장 실패해도 진행 */ }
+  }
   goToStep(currentStep + 1);
 }
 
@@ -1287,8 +1369,9 @@ function generatePrompt() {
     return;
   }
 
+  const userRole = document.getElementById('userRole').value.trim();
   let prompt = '';
-  prompt += '나는 다음의 번거롭고 반복적인 업무를 AI로 개선하고 싶어.\n\n';
+  prompt += '나는 ' + (userRole ? userRole + '로 일하고 있고, ' : '') + '다음의 번거롭고 반복적인 업무를 AI로 개선하고 싶어.\n\n';
   prompt += '■ 번거로운 업무: ' + taskName + '\n';
   if (taskFreq) prompt += '■ 빈도/소요 시간: ' + taskFreq + '\n';
   if (taskReason) prompt += '■ 이 업무가 존재하는 이유: ' + taskReason + '\n';
@@ -1340,7 +1423,13 @@ let userActions = [];
 
 function trackAction(action) {
   userActions.push(action);
-  // TODO: 배포 시 updateActions() — Supabase에 actions 배열 업데이트
+  if (worksheetId) {
+    fetch('/api/save', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: worksheetId, action })
+    }).catch(() => {});
+  }
 }
 
 // --- Email Modal ---
@@ -1355,15 +1444,39 @@ function closeEmailModal() {
   document.getElementById('emailModal').classList.remove('show');
 }
 
-function sendEmail() {
-  // Security: never store the email anywhere
-  document.getElementById('emailInput').value = '';
+async function sendEmail() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email) {
+    showToast('이메일을 입력해주세요');
+    return;
+  }
+
+  const worksheetContent = getDownloadText();
+  document.getElementById('emailInput').value = ''; // 즉시 초기화 (보안)
+
+  try {
+    const resp = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        worksheetContent,
+        name: document.getElementById('userName').value
+      })
+    });
+    if (resp.ok) {
+      showToast('이메일이 발송되었습니다');
+    } else {
+      showToast('발송에 실패했습니다. 다시 시도해주세요');
+    }
+  } catch (e) {
+    showToast('발송에 실패했습니다. 다시 시도해주세요');
+  }
   closeEmailModal();
-  showToast('배포 후 사용 가능한 기능입니다');
 }
 
 // --- Download ---
-function downloadTxt() {
+function getDownloadText() {
   const name = document.getElementById('userName').value || '(미입력)';
   const role = document.getElementById('userRole').value || '(미입력)';
   const task = document.getElementById('taskName').value || '(미입력)';
@@ -1401,13 +1514,18 @@ function downloadTxt() {
   txt += '\n--- STEP 4. 전환 (AI 프롬프트) ---\n';
   txt += prompt + '\n';
   txt += '\n========================================\n';
+  return txt;
+}
+
+function downloadTxt() {
+  const txt = getDownloadText();
+  const name = document.getElementById('userName').value || 'worksheet';
 
   const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const safeName = name !== '(미입력)' ? name : 'worksheet';
-  a.download = '업무자동화_워크시트_' + safeName + '.txt';
+  a.download = '업무자동화_진단_4단계_' + name + '.txt';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
