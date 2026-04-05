@@ -181,6 +181,11 @@
 - [x] `/api/generate-examples` 구현 (Gemini 2.5 Flash Lite)
 - [x] 이메일 모달 실제 발송 연결
 
+### Phase 2.5: UX 개선 ✅
+- [x] "병목" → "비효율" 용어 전면 교체 (UI 텍스트, 프롬프트, 다운로드 파일 포함)
+- [x] Step 3→4 전환 시 "다음 단계" 버튼 중복 클릭 방지 (API 저장 대기 중 비활성화)
+- [x] sessionStorage 구버전 호환 처리 (`isBottleneck` → `isInefficient` fallback)
+
 ### Phase 3: 고도화 (향후)
 - [ ] 관리자 대시보드 (수강생 데이터 열람/분석)
 - [ ] 고객사별 브랜딩 커스터마이징
