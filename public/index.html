@@ -1286,8 +1286,13 @@ function updateNav() {
   }
 }
 
+let _nextStepBusy = false;
 async function nextStep() {
-  if (currentStep === totalSteps) return;
+  if (_nextStepBusy || currentStep === totalSteps) return;
+  _nextStepBusy = true;
+  const nextBtn = document.getElementById('btnNext');
+  if (nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.6'; }
+
   // Step 3→4 전환 시 DB 저장
   if (currentStep === 3) {
     generatePrompt();
@@ -1314,6 +1319,8 @@ async function nextStep() {
     } catch (e) { /* 저장 실패해도 진행 */ }
   }
   goToStep(currentStep + 1);
+  _nextStepBusy = false;
+  if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = ''; }
 }
 
 function prevStep() {
