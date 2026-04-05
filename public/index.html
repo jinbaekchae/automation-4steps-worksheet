@@ -365,7 +365,7 @@ body {
   background: var(--green-light);
   color: var(--green);
 }
-.substep-input.bottleneck {
+.substep-input.inefficient {
   border-color: var(--red);
   background: var(--red-light);
   box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
@@ -375,7 +375,7 @@ body {
   gap: 4px;
   margin-top: 4px;
 }
-.btn-bottleneck {
+.btn-inefficient {
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -386,11 +386,11 @@ body {
   background: var(--gray-100);
   color: var(--gray-500);
 }
-.btn-bottleneck.active {
+.btn-inefficient.active {
   background: var(--red);
   color: white;
 }
-.btn-bottleneck:hover { opacity: 0.8; }
+.btn-inefficient:hover { opacity: 0.8; }
 .btn-delete-step {
   padding: 3px 8px;
   border-radius: 4px;
@@ -433,9 +433,9 @@ body {
   background: var(--orange-light);
 }
 
-/* Bottleneck reason */
-.bottleneck-reason { margin-top: 6px; }
-.bottleneck-reason input {
+/* Inefficient reason */
+.inefficient-reason { margin-top: 6px; }
+.inefficient-reason input {
   width: 100%;
   padding: 6px 10px;
   border: 1px solid var(--red);
@@ -445,8 +445,8 @@ body {
   background: #FFF5F5;
   color: var(--red);
 }
-.bottleneck-reason input::placeholder { color: #FCA5A5; }
-.bottleneck-reason input:focus { outline: none; box-shadow: 0 0 0 2px rgba(239,68,68,0.15); }
+.inefficient-reason input::placeholder { color: #FCA5A5; }
+.inefficient-reason input:focus { outline: none; box-shadow: 0 0 0 2px rgba(239,68,68,0.15); }
 
 /* Step 4: Generated Prompt */
 .prompt-preview {
@@ -547,7 +547,7 @@ body {
   align-items: flex-start;
   gap: 8px;
 }
-.summary-step-item.is-bottleneck {
+.summary-step-item.is-inefficient {
   color: var(--red);
   font-weight: 600;
 }
@@ -884,7 +884,7 @@ body {
       <strong>TIP</strong><br>
       앞서 정의한 Input(시작)에서 Output(끝)까지, 실제로 하는 순서를 적어보세요.<br>
       더 잘게 쪼갤수록 좋아요.<br>
-      <strong style="color: var(--red);">"시간이 오래 걸린다", "실수가 난다", "귀찮다"</strong>는 단계에 병목 버튼을 눌러주세요.
+      <strong style="color: var(--red);">"시간이 오래 걸린다", "실수가 난다", "귀찮다"</strong>는 단계에 비효율 버튼을 눌러주세요.
     </div>
 
     <div class="field-label">업무를 단계별로 쪼개보세요</div>
@@ -1013,7 +1013,7 @@ function updateUserInfoBar() {
 }
 
 // --- Step 3: Data model ---
-// step3Data = [{ text, isBottleneck, reason, linkedInput, linkedOutput }]
+// step3Data = [{ text, isInefficient, reason, linkedInput, linkedOutput }]
 let step3Data = [];
 
 function initStep3() {
@@ -1021,8 +1021,8 @@ function initStep3() {
   const inputVal = document.getElementById('taskInput').value.trim();
   const outputVal = document.getElementById('taskOutput').value.trim();
   step3Data = [
-    { text: inputVal, isBottleneck: false, reason: '', linkedInput: true, linkedOutput: false },
-    { text: outputVal, isBottleneck: false, reason: '', linkedInput: false, linkedOutput: true }
+    { text: inputVal, isInefficient: false, reason: '', linkedInput: true, linkedOutput: false },
+    { text: outputVal, isInefficient: false, reason: '', linkedInput: false, linkedOutput: true }
   ];
   rebuildStep3UI();
 }
@@ -1057,13 +1057,13 @@ function rebuildStep3UI(focusIdx) {
     div.innerHTML =
       '<div class="substep-num">' + (i + 1) + '</div>' +
       '<div class="substep-input-wrap">' +
-        '<input type="text" class="substep-input' + (s.isBottleneck ? ' bottleneck' : '') + '" placeholder="' + placeholder + '" value="' + escapeAttr(s.text) + '" oninput="onStep3Input(' + i + ', this)" data-idx="' + i + '">' +
+        '<input type="text" class="substep-input' + (s.isInefficient ? ' inefficient' : '') + '" placeholder="' + placeholder + '" value="' + escapeAttr(s.text) + '" oninput="onStep3Input(' + i + ', this)" data-idx="' + i + '">' +
         '<div class="substep-actions">' +
-          '<button class="btn-bottleneck' + (s.isBottleneck ? ' active' : '') + '" onclick="toggleStep3Bottleneck(' + i + ')">' + (s.isBottleneck ? '병목 해제' : '병목') + '</button>' +
+          '<button class="btn-inefficient' + (s.isInefficient ? ' active' : '') + '" onclick="toggleStep3Inefficient(' + i + ')">' + (s.isInefficient ? '비효율 해제' : '비효율') + '</button>' +
           (canDelete ? '<button class="btn-delete-step" onclick="deleteStep3(' + i + ')">삭제</button>' : '') +
         '</div>' +
-        '<div class="bottleneck-reason" style="display:' + (s.isBottleneck ? 'block' : 'none') + ';">' +
-          '<input type="text" placeholder="왜 병목인가요? (시간이 오래 걸림, 실수 발생 등)" value="' + escapeAttr(s.reason) + '" oninput="onStep3Reason(' + i + ', this)">' +
+        '<div class="inefficient-reason" style="display:' + (s.isInefficient ? 'block' : 'none') + ';">' +
+          '<input type="text" placeholder="왜 비효율인가요? (시간이 오래 걸림, 실수 발생 등)" value="' + escapeAttr(s.reason) + '" oninput="onStep3Reason(' + i + ', this)">' +
         '</div>' +
       '</div>';
 
@@ -1116,9 +1116,9 @@ function onStep3Reason(idx, el) {
   autoSave();
 }
 
-function toggleStep3Bottleneck(idx) {
-  step3Data[idx].isBottleneck = !step3Data[idx].isBottleneck;
-  if (!step3Data[idx].isBottleneck) step3Data[idx].reason = '';
+function toggleStep3Inefficient(idx) {
+  step3Data[idx].isInefficient = !step3Data[idx].isInefficient;
+  if (!step3Data[idx].isInefficient) step3Data[idx].reason = '';
   rebuildStep3UI();
   autoSave();
 }
@@ -1133,7 +1133,7 @@ function deleteStep3(idx) {
 function addMiddleStep() {
   // Insert before the last (output) item
   const insertAt = step3Data.length - 1;
-  step3Data.splice(insertAt, 0, { text: '', isBottleneck: false, reason: '', linkedInput: false, linkedOutput: false });
+  step3Data.splice(insertAt, 0, { text: '', isInefficient: false, reason: '', linkedInput: false, linkedOutput: false });
   rebuildStep3UI(insertAt);
   autoSave();
 }
@@ -1238,7 +1238,7 @@ function buildPrevPreviews(step) {
       badgeLabel = 'STEP 3 · 분해';
       const steps = [];
       step3Data.forEach((sd, i) => {
-        if (sd.text.trim()) steps.push((sd.isBottleneck ? '🔴 ' : '') + (i+1) + '. ' + sd.text.trim());
+        if (sd.text.trim()) steps.push((sd.isInefficient ? '🔴 ' : '') + (i+1) + '. ' + sd.text.trim());
       });
       content = steps.length ? steps.join('\n') : '<span style="color:var(--gray-300);">미입력</span>';
     }
@@ -1330,24 +1330,24 @@ function prevStep() {
   goToStep(currentStep - 1);
 }
 
-// toggleBottleneck is now handled by toggleStep3Bottleneck
+// toggleStep3Inefficient handles inefficiency marking
 
 // --- Step 4: Generate Prompt ---
-function getBottlenecks() {
-  const bottlenecks = [];
+function getInefficiencies() {
+  const inefficiencies = [];
   step3Data.forEach((s, i) => {
-    if (s.isBottleneck && s.text.trim()) {
-      bottlenecks.push({ step: i + 1, text: s.text.trim(), reason: s.reason });
+    if (s.isInefficient && s.text.trim()) {
+      inefficiencies.push({ step: i + 1, text: s.text.trim(), reason: s.reason });
     }
   });
-  return bottlenecks;
+  return inefficiencies;
 }
 
 function getAllSteps() {
   const steps = [];
   step3Data.forEach((s, i) => {
     if (s.text.trim()) {
-      steps.push({ num: i + 1, text: s.text.trim(), isBottleneck: s.isBottleneck, reason: s.reason });
+      steps.push({ num: i + 1, text: s.text.trim(), isInefficient: s.isInefficient, reason: s.reason });
     }
   });
   return steps;
@@ -1359,7 +1359,7 @@ function generatePrompt() {
   const taskFreq = document.getElementById('taskFreq').value.trim();
   const taskInput = document.getElementById('taskInput').value.trim();
   const taskOutput = document.getElementById('taskOutput').value.trim();
-  const bottlenecks = getBottlenecks();
+  const inefficiencies = getInefficiencies();
   const allSteps = getAllSteps();
 
   const el = document.getElementById('promptContent');
@@ -1386,17 +1386,17 @@ function generatePrompt() {
     prompt += '\n■ 업무 프로세스:\n';
     allSteps.forEach(s => {
       prompt += '  ' + s.num + '. ' + s.text;
-      if (s.isBottleneck) {
-        prompt += ' ← 🔴 병목';
+      if (s.isInefficient) {
+        prompt += ' ← 🔴 비효율';
         if (s.reason) prompt += ' (' + s.reason + ')';
       }
       prompt += '\n';
     });
   }
 
-  if (bottlenecks.length > 0) {
-    prompt += '\n이 업무 중 다음 지점이 병목이라고 판단했어:\n';
-    bottlenecks.forEach(b => {
+  if (inefficiencies.length > 0) {
+    prompt += '\n이 업무 중 다음 지점이 비효율이라고 판단했어:\n';
+    inefficiencies.forEach(b => {
       prompt += '- ' + b.step + '단계 "' + b.text + '"';
       if (b.reason) prompt += ': ' + b.reason;
       prompt += '\n';
@@ -1504,8 +1504,8 @@ function getDownloadText() {
   txt += '--- STEP 3. 분해 ---\n';
   steps.forEach(s => {
     txt += s.num + '. ' + s.text;
-    if (s.isBottleneck) {
-      txt += '  ← 🔴 병목';
+    if (s.isInefficient) {
+      txt += '  ← 🔴 비효율';
       if (s.reason) txt += ' (' + s.reason + ')';
     }
     txt += '\n';
@@ -1545,8 +1545,8 @@ function resetAll() {
   document.getElementById('taskOutput').value = '';
 
   step3Data = [
-    { text: '', isBottleneck: false, reason: '', linkedInput: true, linkedOutput: false },
-    { text: '', isBottleneck: false, reason: '', linkedInput: false, linkedOutput: true }
+    { text: '', isInefficient: false, reason: '', linkedInput: true, linkedOutput: false },
+    { text: '', isInefficient: false, reason: '', linkedInput: false, linkedOutput: true }
   ];
   rebuildStep3UI();
 
@@ -1573,7 +1573,7 @@ function autoSave() {
     taskInput: document.getElementById('taskInput').value,
     taskOutput: document.getElementById('taskOutput').value,
     currentStep: currentStep,
-    steps: step3Data.map(s => ({ text: s.text, isBottleneck: s.isBottleneck, reason: s.reason, linkedInput: s.linkedInput, linkedOutput: s.linkedOutput }))
+    steps: step3Data.map(s => ({ text: s.text, isInefficient: s.isInefficient, reason: s.reason, linkedInput: s.linkedInput, linkedOutput: s.linkedOutput }))
   };
   sessionStorage.setItem('worksheet_session', JSON.stringify(data));
 }
@@ -1596,7 +1596,7 @@ function loadSession() {
     if (data.steps && data.steps.length > 0) {
       step3Data = data.steps.map(s => ({
         text: s.text || '',
-        isBottleneck: !!s.isBottleneck,
+        isInefficient: !!(s.isInefficient ?? s.isBottleneck), // 구버전 호환
         reason: s.reason || '',
         linkedInput: !!s.linkedInput,
         linkedOutput: !!s.linkedOutput

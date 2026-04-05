@@ -47,7 +47,7 @@
 - 1단계(Input)와 마지막 단계(Output)는 Step 2와 동기화, 색상 구분 (파란/초록)
 - 중간 단계 자유 추가/삭제 ("+ 단계 추가" 버튼은 Input과 Output 사이)
 - 단계 사이 ↓ 화살표
-- 병목 표시 기능 + 사유 입력
+- 비효율 표시 기능 + 사유 입력
 - 첫/마지막 단계는 삭제 불가
 
 ### 3.4 Step 4: 전환 (최종 화면)
@@ -60,8 +60,8 @@
   ■ 이 업무가 존재하는 이유: {taskReason}
   ■ Input: {taskInput}
   ■ Output: {taskOutput}
-  ■ 업무 프로세스: {steps with bottleneck markers}
-  이 업무 중 다음 지점이 병목이라고 판단했어: {bottlenecks}
+  ■ 업무 프로세스: {steps with inefficiency markers}
+  이 업무 중 다음 지점이 비효율이라고 판단했어: {inefficiencies}
   내가 제대로 짚었는지, 어떻게 하면 AI를 접목할 수 있는지 파악할 수 있도록 나를 인터뷰해줘.
   ```
 - 복사 버튼 (프롬프트 영역 우상단)
