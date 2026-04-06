@@ -17,8 +17,18 @@ export default async function handler(req, res) {
   "taskFreq": "빈도와 소요 시간 예시 (예: 매주 1회, 약 2시간)",
   "taskReason": "이 업무가 존재하는 이유 예시 (1문장)",
   "taskInput": "이 업무의 Input 예시 (1문장)",
-  "taskOutput": "이 업무의 Output 예시 (1문장)"
-}`;
+  "taskOutput": "이 업무의 Output 예시 (1문장)",
+  "guideExamples": {
+    "step1": ["이 직무에서 흔한 반복 업무 예시 3~4개 (짧은 문장)"],
+    "step2": [{"input": "Input 예시", "output": "Output 예시"}],
+    "step3": ["업무 분해 단계 예시 5개 (짧은 문장)"]
+  }
+}
+
+guideExamples 설명:
+- step1: 이 직무에서 반복적으로 수행하는 업무 3~4개를 짧은 문장으로
+- step2: 이 직무의 대표 업무 2~3개에 대해 Input/Output 쌍을 만들어주세요
+- step3: 이 직무의 대표 반복 업무 하나를 5단계로 분해한 예시`;
 
   try {
     const response = await fetch(
@@ -28,7 +38,7 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 300 }
+          generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
         })
       }
     );
