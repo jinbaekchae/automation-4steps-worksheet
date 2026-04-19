@@ -9,6 +9,7 @@ CREATE TABLE worksheets (
   task_input TEXT,
   task_output TEXT,
   steps JSONB DEFAULT '[]'::jsonb,
+  ai_tool TEXT,
   prompt TEXT,
   actions TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now()
@@ -26,3 +27,6 @@ BEGIN
   WHERE id = worksheet_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 기존 테이블에 ai_tool 컬럼 추가 (이미 생성된 경우)
+ALTER TABLE worksheets ADD COLUMN IF NOT EXISTS ai_tool TEXT;

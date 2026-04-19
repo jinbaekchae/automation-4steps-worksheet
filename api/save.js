@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'POST') {
-    const { name, role, taskName, taskFreq, taskReason, taskInput, taskOutput, steps, prompt } = req.body;
+    const { name, role, taskName, taskFreq, taskReason, taskInput, taskOutput, steps, aiTool, prompt } = req.body;
 
     const { data, error } = await supabase
       .from('worksheets')
@@ -25,6 +25,7 @@ export default async function handler(req, res) {
         task_input: (taskInput || '').slice(0, 1000),
         task_output: (taskOutput || '').slice(0, 1000),
         steps: steps || [],
+        ai_tool: (aiTool || '').slice(0, 200),
         prompt: (prompt || '').slice(0, 5000),
         actions: []
       })

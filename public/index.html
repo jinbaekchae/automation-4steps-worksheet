@@ -201,7 +201,7 @@ body {
   line-height: 1.8;
 }
 .guide-toggle {
-  display: inline-block;
+  display: block;
   margin-top: 8px;
   font-size: 12px;
   color: var(--gray-500);
@@ -968,16 +968,34 @@ body {
     <div class="step-badge" style="background: var(--purple-light); color: var(--purple);">STEP 4</div>
     <div class="step-title">전환</div>
     <div class="step-desc">작성한 내용을 AI에게 전달할 프롬프트로 전환합니다</div>
-    <div class="step-guide" style="border-color: var(--purple);">
+    <!-- 도구 입력 구간용 가이드 -->
+    <div class="step-guide" id="toolGuide" style="border-color: var(--purple);">
       <strong>TIP</strong><br>
-      1~3단계에서 정리한 내용이 자동으로 프롬프트에 반영됩니다.<br>
+      프롬프트를 만들기 전에, 어떤 AI 도구로 이 업무를 돌릴 계획인지 먼저 정해주세요.<br>
+      선택한 도구가 프롬프트 끝에 함께 들어가서, AI가 자기 능력 범위(파일 업로드·코드 실행·이미지 생성 등) 안에서 답하도록 돕습니다.
+      <span class="guide-toggle" onclick="toggleGuide(this)">▼ 더 자세한 가이드 보기</span>
+      <div class="guide-detail">
+        <strong>📌 AI 도구 선택 팁</strong>
+        <ul style="margin: 4px 0 0 0; padding-left: 18px;">
+          <li>이미 써본 도구가 있다면 그 이름을 적으세요 (예: ChatGPT, Claude, 제미나이)</li>
+          <li>도구를 아직 못 정했다면 "ChatGPT"처럼 가장 익숙한 것 하나부터 시작해도 좋아요</li>
+          <li>여러 도구를 조합해 쓸 계획이면 쉼표로 나열하세요 (예: Claude, 제미나이 Gems)</li>
+          <li>특정 기능이 필요한 작업이라면 그에 맞는 도구를 적으세요 (파일 정리 → Claude, 이미지 생성 → 제미나이 등)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 프롬프트 구간용 가이드 (초기 숨김) -->
+    <div class="step-guide" id="promptGuide" style="border-color: var(--purple); display:none;">
+      <strong>TIP</strong><br>
+      1~3단계에서 정리한 내용이 자동으로 프롬프트에 반영됐습니다.<br>
       이 프롬프트를 AI에게 보내면, AI가 당신의 상황을 파악하기 위한 질문을 던져줍니다.
       <span class="guide-toggle" onclick="toggleGuide(this)">▼ 더 자세한 가이드 보기</span>
       <div class="guide-detail">
         <strong>📌 프롬프트 사용법</strong>
         <ol style="margin: 4px 0 0 0; padding-left: 18px;">
           <li>"복사" 버튼을 눌러 프롬프트를 복사하세요</li>
-          <li>ChatGPT, Claude 등 AI 도구에 붙여넣으세요</li>
+          <li>앞서 적은 AI 도구에 붙여넣으세요</li>
           <li>AI가 상황을 파악하기 위한 질문을 던져줍니다</li>
           <li>질문에 답하면서 AI와 함께 해결 방법을 찾아보세요</li>
         </ol>
@@ -989,17 +1007,27 @@ body {
       </div>
     </div>
 
-    <div class="field-label">AI에게 보낼 프롬프트</div>
-    <div class="prompt-preview" id="promptPreview">
-      <button class="btn-copy-prompt" onclick="trackAction('copy_prompt'); copyPrompt()">복사</button>
-      <span id="promptContent">1~3단계를 작성하면 자동으로 생성됩니다</span>
+    <!-- 도구 입력 영역 -->
+    <div id="aiToolSection">
+      <div class="field-label">어떤 AI 도구로 자동화할 계획인가요? <span style="color:var(--gray-500); font-weight:normal; font-size:0.88em;">(여러개 작성 가능)</span></div>
+      <input class="field-input" id="aiTool" type="text" placeholder="예시: 제미나이 Gems, 클로드 코드, 젠스파크 'AI개발자' 등" style="margin-bottom:12px;">
+      <button class="btn-nav btn-next" style="width:100%;" onclick="submitTool()">프롬프트 생성하기 →</button>
     </div>
 
-    <div class="action-row" style="margin-top: 20px;">
-      <button class="btn-action btn-edit" onclick="trackAction('edit'); goToStep(1)">수정하기</button>
-      <button class="btn-action btn-download" onclick="trackAction('download'); downloadTxt()">다운로드</button>
-      <button class="btn-action btn-email" onclick="trackAction('email'); openEmailModal()">이메일로 받기</button>
-      <button class="btn-action btn-reset" onclick="trackAction('reset'); resetAll()">새로 작성</button>
+    <!-- 프롬프트 + 액션 (도구 입력 후 표시) -->
+    <div id="promptSection" style="display:none;">
+      <div class="field-label">AI에게 보낼 프롬프트</div>
+      <div class="prompt-preview" id="promptPreview">
+        <button class="btn-copy-prompt" onclick="trackAction('copy_prompt'); copyPrompt()">복사</button>
+        <span id="promptContent">1~3단계를 작성하면 자동으로 생성됩니다</span>
+      </div>
+
+      <div class="action-row" style="margin-top: 20px;">
+        <button class="btn-action btn-edit" onclick="trackAction('edit'); goToStep(1)">수정하기</button>
+        <button class="btn-action btn-download" onclick="trackAction('download'); downloadTxt()">다운로드</button>
+        <button class="btn-action btn-email" onclick="trackAction('email'); openEmailModal()">이메일로 받기</button>
+        <button class="btn-action btn-reset" onclick="trackAction('reset'); resetAll()">새로 작성</button>
+      </div>
     </div>
   </div>
 
@@ -1269,7 +1297,12 @@ function goToStep(step) {
     syncStep3FromIO();
     rebuildStep3UI();
   }
-  if (step === 4) generatePrompt();
+  if (step === 4) {
+    document.getElementById('aiToolSection').style.display = 'block';
+    document.getElementById('promptSection').style.display = 'none';
+    document.getElementById('toolGuide').style.display = 'block';
+    document.getElementById('promptGuide').style.display = 'none';
+  }
 
   updateProgress();
   updateNav();
@@ -1380,31 +1413,7 @@ async function nextStep() {
   const nextBtn = document.getElementById('btnNext');
   if (nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.6'; }
 
-  // Step 3→4 전환 시 DB 저장
-  if (currentStep === 3) {
-    generatePrompt();
-    try {
-      const resp = await fetch('/api/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: document.getElementById('userName').value,
-          role: document.getElementById('userRole').value,
-          taskName: document.getElementById('taskName').value,
-          taskFreq: document.getElementById('taskFreq').value,
-          taskReason: document.getElementById('taskReason').value,
-          taskInput: document.getElementById('taskInput').value,
-          taskOutput: document.getElementById('taskOutput').value,
-          steps: step3Data,
-          prompt: getPromptText()
-        })
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        worksheetId = data.id;
-      }
-    } catch (e) { /* 저장 실패해도 진행 */ }
-  }
+  // Step 3→4: generatePrompt + DB 저장은 submitTool()에서 처리
   goToStep(currentStep + 1);
   _nextStepBusy = false;
   if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = ''; }
@@ -1426,7 +1435,44 @@ function prevStep() {
 
 // toggleStep3Inefficient handles inefficiency marking
 
-// --- Step 4: Generate Prompt ---
+// --- Step 4: Tool Submit + Generate Prompt ---
+async function submitTool() {
+  const aiTool = document.getElementById('aiTool').value.trim();
+  if (!aiTool) {
+    showToast('사용할 AI 도구를 입력해주세요');
+    return;
+  }
+  generatePrompt();
+  document.getElementById('aiToolSection').style.display = 'none';
+  document.getElementById('promptSection').style.display = 'block';
+  document.getElementById('toolGuide').style.display = 'none';
+  document.getElementById('promptGuide').style.display = 'block';
+  autoSave();
+  try {
+    const resp = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('userName').value,
+        role: document.getElementById('userRole').value,
+        taskName: document.getElementById('taskName').value,
+        taskFreq: document.getElementById('taskFreq').value,
+        taskReason: document.getElementById('taskReason').value,
+        taskInput: document.getElementById('taskInput').value,
+        taskOutput: document.getElementById('taskOutput').value,
+        steps: step3Data,
+        aiTool: aiTool,
+        prompt: getPromptText()
+      })
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      worksheetId = data.id;
+    }
+  } catch (e) { /* 저장 실패해도 진행 */ }
+}
+
+
 function getInefficiencies() {
   const inefficiencies = [];
   step3Data.forEach((s, i) => {
@@ -1498,6 +1544,9 @@ function generatePrompt() {
   }
 
   prompt += '\n내가 제대로 짚었는지, 어떻게 하면 AI를 접목할 수 있는지 파악할 수 있도록 나를 인터뷰해줘.';
+
+  const aiTool = document.getElementById('aiTool').value.trim();
+  if (aiTool) prompt += '\n\n■ 사용할 AI 도구: ' + aiTool;
 
   el.textContent = prompt;
 }
@@ -1637,6 +1686,11 @@ function resetAll() {
   document.getElementById('taskReason').value = '';
   document.getElementById('taskInput').value = '';
   document.getElementById('taskOutput').value = '';
+  document.getElementById('aiTool').value = '';
+  document.getElementById('aiToolSection').style.display = 'block';
+  document.getElementById('promptSection').style.display = 'none';
+  document.getElementById('toolGuide').style.display = 'block';
+  document.getElementById('promptGuide').style.display = 'none';
 
   step3Data = [
     { text: '', isInefficient: false, reason: '', linkedInput: true, linkedOutput: false },
@@ -1667,6 +1721,7 @@ function autoSave() {
     taskInput: document.getElementById('taskInput').value,
     taskOutput: document.getElementById('taskOutput').value,
     currentStep: currentStep,
+    aiTool: document.getElementById('aiTool').value,
     steps: step3Data.map(s => ({ text: s.text, isInefficient: s.isInefficient, reason: s.reason, linkedInput: s.linkedInput, linkedOutput: s.linkedOutput }))
   };
   sessionStorage.setItem('worksheet_session', JSON.stringify(data));
@@ -1686,6 +1741,7 @@ function loadSession() {
     document.getElementById('taskReason').value = data.taskReason || '';
     document.getElementById('taskInput').value = data.taskInput || '';
     document.getElementById('taskOutput').value = data.taskOutput || '';
+    if (data.aiTool) document.getElementById('aiTool').value = data.aiTool;
 
     if (data.steps && data.steps.length > 0) {
       step3Data = data.steps.map(s => ({
@@ -1695,6 +1751,14 @@ function loadSession() {
         linkedInput: !!s.linkedInput,
         linkedOutput: !!s.linkedOutput
       }));
+    }
+
+    // Step 4 복원 시: 도구 입력값이 있으면 프롬프트 섹션이 열린 상태로 복원
+    if (data.currentStep === 4 && data.aiTool) {
+      document.getElementById('aiToolSection').style.display = 'none';
+      document.getElementById('promptSection').style.display = 'block';
+      document.getElementById('toolGuide').style.display = 'none';
+      document.getElementById('promptGuide').style.display = 'block';
     }
 
     return data.currentStep || 0;
@@ -1782,6 +1846,8 @@ if (savedStep !== false && savedStep > 0) {
 }
 updateIOArrows();
 </script>
+
+<footer style="text-align:center;padding:24px 0 20px;font-size:12px;color:#aaa;">© Woka. All Rights Reserved</footer>
 
 </body>
 </html>
